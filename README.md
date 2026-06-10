@@ -81,6 +81,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full system design.
 
 ## Documentation
 
+- [Complete Guide](docs/NEXUS_COMPLETE_GUIDE.md) — All-in-one reference (no code, info only)
+- [Project Report](docs/PROJECT_REPORT.md) — Full command guide, architecture, workflow
 - [Architecture](docs/ARCHITECTURE.md)
 - [NXP Protocol](docs/NXP_PROTOCOL.md)
 - [SQLite Schema](docs/SQLITE_SCHEMA.md)
