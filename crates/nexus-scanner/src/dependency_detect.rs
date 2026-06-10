@@ -7,14 +7,21 @@ use regex::Regex;
 
 pub fn detect_dependencies(project_root: &Path) -> Vec<DependencyInfo> {
     let mut deps = Vec::new();
-    deps.extend(parse_cargo_toml(&project_root.join("Cargo.toml")));
+    let cargo_path = project_root.join("Cargo.toml");
+    deps.extend(parse_cargo_toml(&cargo_path));
+    deps.extend(parse_workspace_cargo_toml(&cargo_path));
+    deps.extend(parse_member_cargo_tomls(project_root, &cargo_path));
     deps.extend(parse_package_json(&project_root.join("package.json")));
     deps.extend(parse_pyproject(&project_root.join("pyproject.toml")));
     deps.extend(parse_requirements(&project_root.join("requirements.txt")));
-    deps
+    dedupe_dependencies(deps)
 }
 
 fn parse_cargo_toml(path: &Path) -> Vec<DependencyInfo> {
+    parse_cargo_toml_sections(path, &["dependencies", "dev-dependencies", "build-dependencies"])
+}
+
+fn parse_workspace_cargo_toml(path: &Path) -> Vec<DependencyInfo> {
     if !path.exists() {
         return vec![];
     }
@@ -25,28 +32,107 @@ fn parse_cargo_toml(path: &Path) -> Vec<DependencyInfo> {
         return vec![];
     };
 
+    let Some(workspace) = value.get("workspace").and_then(|w| w.as_table()) else {
+        return vec![];
+    };
+
     let mut deps = Vec::new();
-    for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
-        if let Some(table) = value.get(section).and_then(|v| v.as_table()) {
+    if let Some(table) = workspace.get("dependencies").and_then(|v| v.as_table()) {
+        for (name, spec) in table {
+            deps.push(DependencyInfo {
+                name: name.clone(),
+                version: cargo_dep_version(spec),
+                kind: "workspace.dependencies".to_string(),
+                source_file: "Cargo.toml".to_string(),
+            });
+        }
+    }
+    deps
+}
+
+fn parse_member_cargo_tomls(project_root: &Path, workspace_cargo: &Path) -> Vec<DependencyInfo> {
+    if !workspace_cargo.exists() {
+        return vec![];
+    }
+    let Ok(content) = fs::read_to_string(workspace_cargo) else {
+        return vec![];
+    };
+    let Ok(value) = content.parse::<toml::Value>() else {
+        return vec![];
+    };
+
+    let Some(members) = value
+        .get("workspace")
+        .and_then(|w| w.get("members"))
+        .and_then(|m| m.as_array())
+    else {
+        return vec![];
+    };
+
+    let mut deps = Vec::new();
+    for member in members {
+        let Some(member_path) = member.as_str() else {
+            continue;
+        };
+        let member_cargo = project_root.join(member_path).join("Cargo.toml");
+        deps.extend(parse_cargo_toml_sections(
+            &member_cargo,
+            &["dependencies", "dev-dependencies", "build-dependencies"],
+        ));
+    }
+    deps
+}
+
+fn parse_cargo_toml_sections(path: &Path, sections: &[&str]) -> Vec<DependencyInfo> {
+    if !path.exists() {
+        return vec![];
+    }
+    let Ok(content) = fs::read_to_string(path) else {
+        return vec![];
+    };
+    let Ok(value) = content.parse::<toml::Value>() else {
+        return vec![];
+    };
+
+    let source = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("Cargo.toml")
+        .to_string();
+
+    let mut deps = Vec::new();
+    for section in sections {
+        if let Some(table) = value.get(*section).and_then(|v| v.as_table()) {
             for (name, spec) in table {
-                let version = match spec {
-                    toml::Value::String(v) => Some(v.clone()),
-                    toml::Value::Table(t) => t
-                        .get("version")
-                        .and_then(|v| v.as_str())
-                        .map(|s| s.to_string()),
-                    _ => None,
-                };
                 deps.push(DependencyInfo {
                     name: name.clone(),
-                    version,
+                    version: cargo_dep_version(spec),
                     kind: section.to_string(),
-                    source_file: "Cargo.toml".to_string(),
+                    source_file: source.clone(),
                 });
             }
         }
     }
     deps
+}
+
+fn cargo_dep_version(spec: &toml::Value) -> Option<String> {
+    match spec {
+        toml::Value::String(v) => Some(v.clone()),
+        toml::Value::Table(t) => t
+            .get("version")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
+        _ => None,
+    }
+}
+
+fn dedupe_dependencies(deps: Vec<DependencyInfo>) -> Vec<DependencyInfo> {
+    let mut seen = HashMap::new();
+    for dep in deps {
+        seen.entry(dep.name.clone()).or_insert(dep);
+    }
+    seen.into_values().collect()
 }
 
 fn parse_package_json(path: &Path) -> Vec<DependencyInfo> {

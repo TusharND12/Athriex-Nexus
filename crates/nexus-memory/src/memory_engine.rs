@@ -254,6 +254,32 @@ impl MemoryEngine {
         Ok(())
     }
 
+    /// Rebuild SQLite decision/task rows and FTS index from JSON stores.
+    pub fn sync_stores_to_db(&self) -> NexusResult<()> {
+        self.conn
+            .execute("DELETE FROM decisions", [])
+            .map_err(db_err)?;
+        self.conn.execute("DELETE FROM tasks", []).map_err(db_err)?;
+        self.conn
+            .execute(
+                "DELETE FROM memory_fts WHERE source IN ('decision', 'task')",
+                [],
+            )
+            .map_err(db_err)?;
+
+        let decisions = self.load_decisions()?;
+        for decision in &decisions.decisions {
+            self.persist_decision_to_db(decision)?;
+        }
+
+        let tasks = self.load_tasks()?;
+        for task in &tasks.tasks {
+            self.persist_task_to_db(task)?;
+        }
+
+        Ok(())
+    }
+
     fn index_fts(&self, doc_id: &str, source: &str, content: &str) -> NexusResult<()> {
         self.conn
             .execute("DELETE FROM memory_fts WHERE doc_id = ?1", [doc_id])

@@ -57,13 +57,7 @@ impl<'a> NxpEngine<'a> {
         self.memory.save_decisions(&doc.decisions)?;
         self.memory.save_tasks(&doc.tasks)?;
         self.memory.save_timeline(&doc.timeline)?;
-
-        for decision in &doc.decisions.decisions {
-            self.memory.persist_decision_to_db(decision)?;
-        }
-        for task in &doc.tasks.tasks {
-            self.memory.persist_task_to_db(task)?;
-        }
+        self.memory.sync_stores_to_db()?;
 
         KnowledgeEngine::new(self.memory).persist_graph_from(&doc.knowledge_graph)?;
 

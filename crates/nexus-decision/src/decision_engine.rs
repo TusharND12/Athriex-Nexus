@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 use nexus_core::{Decision, DecisionStatus, NexusResult, TimelineEvent, TimelineEventKind};
 use nexus_memory::MemoryEngine;
@@ -19,9 +21,18 @@ impl<'a> DecisionEngine<'a> {
         tags: Vec<String>,
         author: Option<String>,
     ) -> NexusResult<Decision> {
+        let content = content.into();
+        let mut store = self.memory.load_decisions()?;
+        let normalized = content.trim().to_lowercase();
+        if let Some(existing) = store.decisions.iter().find(|d| {
+            d.status == DecisionStatus::Active && d.content.trim().to_lowercase() == normalized
+        }) {
+            return Ok(existing.clone());
+        }
+
         let decision = Decision {
             id: Uuid::new_v4(),
-            content: content.into(),
+            content,
             rationale,
             tags,
             created_at: Utc::now(),
@@ -29,7 +40,6 @@ impl<'a> DecisionEngine<'a> {
             status: DecisionStatus::Active,
         };
 
-        let mut store = self.memory.load_decisions()?;
         store.decisions.push(decision.clone());
         self.memory.save_decisions(&store)?;
         self.memory.persist_decision_to_db(&decision)?;
@@ -51,13 +61,28 @@ impl<'a> DecisionEngine<'a> {
     }
 
     pub fn list_active(&self) -> NexusResult<Vec<Decision>> {
-        Ok(self
+        let mut by_content: HashMap<String, Decision> = HashMap::new();
+        for decision in self
             .memory
             .load_decisions()?
             .decisions
             .into_iter()
             .filter(|d| d.status == DecisionStatus::Active)
-            .collect())
+        {
+            let key = decision.content.trim().to_lowercase();
+            by_content
+                .entry(key)
+                .and_modify(|existing| {
+                    if decision.created_at > existing.created_at {
+                        *existing = decision.clone();
+                    }
+                })
+                .or_insert(decision);
+        }
+
+        let mut decisions: Vec<_> = by_content.into_values().collect();
+        decisions.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        Ok(decisions)
     }
 
     pub fn format_all(&self) -> NexusResult<String> {

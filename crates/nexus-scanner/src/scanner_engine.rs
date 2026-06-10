@@ -93,9 +93,17 @@ impl<'a> ScannerEngine<'a> {
 
             if is_entry_point(&rel) {
                 important_files.push(ImportantFile {
-                    path: rel,
+                    path: rel.clone(),
                     reason: "Project entry point".to_string(),
                     relevance: 1.0,
+                });
+            }
+
+            if is_documentation_file(&rel) {
+                important_files.push(ImportantFile {
+                    path: rel,
+                    reason: "Documentation".to_string(),
+                    relevance: documentation_relevance(&path),
                 });
             }
         }
@@ -235,6 +243,31 @@ fn is_entry_point(rel: &str) -> bool {
             | "src/app.tsx"
             | "src/App.tsx"
     )
+}
+
+fn is_documentation_file(rel: &str) -> bool {
+    let lower = rel.to_lowercase();
+    lower.ends_with(".md")
+        && (lower == "readme.md"
+            || lower.starts_with("docs/")
+            || lower.contains("/docs/")
+            || lower.ends_with("_guide.md")
+            || lower.ends_with("_report.md"))
+}
+
+fn documentation_relevance(path: &PathBuf) -> f32 {
+    let name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    if name == "readme.md" {
+        1.0
+    } else if name.contains("architecture") || name.contains("guide") {
+        0.9
+    } else {
+        0.75
+    }
 }
 
 fn count_symbols(path: &PathBuf, lang: &str) -> NexusResult<usize> {

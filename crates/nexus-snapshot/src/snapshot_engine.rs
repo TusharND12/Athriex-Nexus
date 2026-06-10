@@ -153,6 +153,8 @@ impl<'a> SnapshotEngine<'a> {
             }
         }
 
+        self.memory.sync_stores_to_db()?;
+
         self.memory.append_timeline_event(TimelineEvent {
             id: Uuid::new_v4(),
             kind: TimelineEventKind::SnapshotRestore,

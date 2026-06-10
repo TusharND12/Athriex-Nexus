@@ -25,11 +25,14 @@ impl<'a> HealthAnalyzer<'a> {
         let doc_files = architecture
             .important_files
             .iter()
-            .filter(|f| f.path.ends_with(".md") || f.path.contains("README"))
-            .count();
+            .filter(|f| {
+                let lower = f.path.to_lowercase();
+                lower.ends_with(".md") || lower.contains("readme")
+            })
+            .count()
+            .max(count_markdown_in_project(&self.memory.paths.project_root));
 
         let dep_count = architecture.dependencies.len();
-        let file_count = architecture.important_files.len().max(1);
 
         let technical_debt = HealthMetric {
             score: score_inverse(pending_tasks, 20),
@@ -42,7 +45,7 @@ impl<'a> HealthAnalyzer<'a> {
         };
 
         let documentation = HealthMetric {
-            score: ((doc_files as f32 / file_count as f32) * 100.0).min(100.0),
+            score: documentation_score(doc_files),
             summary: format!("{doc_files} documentation files indexed"),
         };
 
@@ -107,4 +110,44 @@ fn score_inverse(value: usize, threshold: usize) -> f32 {
         return 100.0;
     }
     ((1.0 - (value as f32 / threshold as f32)) * 100.0).clamp(0.0, 100.0)
+}
+
+fn documentation_score(doc_files: usize) -> f32 {
+    match doc_files {
+        0 => 0.0,
+        1 => 40.0,
+        2..=3 => 70.0,
+        4..=6 => 85.0,
+        _ => 100.0,
+    }
+}
+
+fn count_markdown_in_project(project_root: &std::path::Path) -> usize {
+    let mut count = 0usize;
+    let candidates = [
+        project_root.join("README.md"),
+        project_root.join("readme.md"),
+        project_root.join("docs"),
+    ];
+
+    if candidates[0].exists() || candidates[1].exists() {
+        count += 1;
+    }
+
+    let docs_dir = &candidates[2];
+    if docs_dir.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(docs_dir) {
+            count += entries
+                .filter_map(Result::ok)
+                .filter(|e| {
+                    e.path()
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .is_some_and(|ext| ext.eq_ignore_ascii_case("md"))
+                })
+                .count();
+        }
+    }
+
+    count
 }
