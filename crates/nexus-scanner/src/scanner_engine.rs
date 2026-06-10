@@ -4,8 +4,8 @@ use std::path::PathBuf;
 
 use chrono::Utc;
 use nexus_core::{
-    Architecture, ImportantFile, LanguageStats, NexusResult, ScanResult, Technology,
-    TimelineEvent, TimelineEventKind,
+    Architecture, ImportantFile, LanguageStats, NexusResult, ScanResult, Technology, TimelineEvent,
+    TimelineEventKind,
 };
 use nexus_memory::MemoryEngine;
 use streaming_iterator::StreamingIterator;
@@ -83,11 +83,11 @@ impl<'a> ScannerEngine<'a> {
                 let count = count_symbols(&path, lang).unwrap_or(0);
                 symbol_count += count;
                 if count > 5 {
-                        important_files.push(ImportantFile {
-                            path: rel.clone(),
-                            reason: format!("Contains {count} top-level symbols"),
-                            relevance: (count as f32 / 20.0).min(1.0),
-                        });
+                    important_files.push(ImportantFile {
+                        path: rel.clone(),
+                        reason: format!("Contains {count} top-level symbols"),
+                        relevance: (count as f32 / 20.0).min(1.0),
+                    });
                 }
             }
 
@@ -106,7 +106,7 @@ impl<'a> ScannerEngine<'a> {
 
         let technologies = build_technologies(&lang_stats, &frameworks, &dependencies);
 
-        let mut architecture = Architecture {
+        let architecture = Architecture {
             version: nexus_core::NEXUS_VERSION.to_string(),
             updated_at: Utc::now(),
             layers,
@@ -252,8 +252,8 @@ fn count_symbols(path: &PathBuf, lang: &str) -> NexusResult<usize> {
         .parse(&content, None)
         .ok_or_else(|| nexus_core::NexusError::Scan("parse failed".into()))?;
 
-    let query = Query::new(&ts_lang, query_src)
-        .map_err(|e| nexus_core::NexusError::Scan(e.to_string()))?;
+    let query =
+        Query::new(&ts_lang, query_src).map_err(|e| nexus_core::NexusError::Scan(e.to_string()))?;
     let mut cursor = QueryCursor::new();
     let matches = cursor.matches(&query, tree.root_node(), content.as_bytes());
     Ok(matches.count())

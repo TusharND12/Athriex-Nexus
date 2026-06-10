@@ -1,9 +1,7 @@
 use std::fs;
 
 use chrono::Utc;
-use nexus_core::{
-    NexusResult, SnapshotManifest, TimelineEvent, TimelineEventKind,
-};
+use nexus_core::{NexusResult, SnapshotManifest, TimelineEvent, TimelineEventKind};
 use nexus_memory::{db_err, MemoryEngine};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -17,7 +15,11 @@ impl<'a> SnapshotEngine<'a> {
         Self { memory }
     }
 
-    pub fn create(&self, label: impl Into<String>, description: Option<String>) -> NexusResult<SnapshotManifest> {
+    pub fn create(
+        &self,
+        label: impl Into<String>,
+        description: Option<String>,
+    ) -> NexusResult<SnapshotManifest> {
         let label = label.into();
         let id = Uuid::new_v4();
         let snapshot_dir = self.memory.paths.snapshots_dir().join(id.to_string());
@@ -99,20 +101,23 @@ impl<'a> SnapshotEngine<'a> {
             "SELECT id, label, created_at, description, memory_hash, architecture_hash, decisions_count, tasks_count
              FROM snapshots ORDER BY created_at DESC",
         ).map_err(db_err)?;
-        let rows = stmt.query_map([], |row| {
-            Ok(SnapshotManifest {
-                id: Uuid::parse_str(&row.get::<_, String>(0)?).unwrap_or_else(|_| Uuid::new_v4()),
-                label: row.get(1)?,
-                created_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map(|d| d.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now()),
-                description: row.get(3)?,
-                memory_hash: row.get(4)?,
-                architecture_hash: row.get(5)?,
-                decisions_count: row.get(6)?,
-                tasks_count: row.get(7)?,
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(SnapshotManifest {
+                    id: Uuid::parse_str(&row.get::<_, String>(0)?)
+                        .unwrap_or_else(|_| Uuid::new_v4()),
+                    label: row.get(1)?,
+                    created_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
+                        .map(|d| d.with_timezone(&Utc))
+                        .unwrap_or_else(|_| Utc::now()),
+                    description: row.get(3)?,
+                    memory_hash: row.get(4)?,
+                    architecture_hash: row.get(5)?,
+                    decisions_count: row.get(6)?,
+                    tasks_count: row.get(7)?,
+                })
             })
-        }).map_err(db_err)?;
+            .map_err(db_err)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(db_err)
     }
 
@@ -124,7 +129,11 @@ impl<'a> SnapshotEngine<'a> {
             .find(|s| s.id.to_string().starts_with(id_str) || s.label == id_str)
             .ok_or_else(|| nexus_core::NexusError::SnapshotNotFound(id_str.to_string()))?;
 
-        let snapshot_dir = self.memory.paths.snapshots_dir().join(manifest.id.to_string());
+        let snapshot_dir = self
+            .memory
+            .paths
+            .snapshots_dir()
+            .join(manifest.id.to_string());
         if !snapshot_dir.is_dir() {
             return Err(nexus_core::NexusError::SnapshotNotFound(id_str.to_string()));
         }

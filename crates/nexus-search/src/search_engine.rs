@@ -37,8 +37,7 @@ impl<'a> SearchEngine<'a> {
         let q = query.to_lowercase();
         for d in decisions.decisions {
             if d.content.to_lowercase().contains(&q)
-                || d
-                    .rationale
+                || d.rationale
                     .as_ref()
                     .map(|r| r.to_lowercase().contains(&q))
                     .unwrap_or(false)
@@ -87,19 +86,25 @@ impl<'a> SearchEngine<'a> {
             .collect::<Vec<_>>()
             .join(" OR ");
 
-        let mut stmt = self.memory.connection().prepare(
-            "SELECT doc_id, source, snippet(memory_fts, 2, '>>', '<<', '…', 20) as snip, rank
+        let mut stmt = self
+            .memory
+            .connection()
+            .prepare(
+                "SELECT doc_id, source, snippet(memory_fts, 2, '>>', '<<', '…', 20) as snip, rank
              FROM memory_fts WHERE memory_fts MATCH ?1 ORDER BY rank LIMIT ?2",
-        ).map_err(db_err)?;
+            )
+            .map_err(db_err)?;
 
-        let rows = stmt.query_map(rusqlite::params![sanitized, limit as i64], |row| {
-            Ok(SearchHit {
-                doc_id: row.get(0)?,
-                source: row.get(1)?,
-                snippet: row.get(2)?,
-                rank: row.get(3)?,
+        let rows = stmt
+            .query_map(rusqlite::params![sanitized, limit as i64], |row| {
+                Ok(SearchHit {
+                    doc_id: row.get(0)?,
+                    source: row.get(1)?,
+                    snippet: row.get(2)?,
+                    rank: row.get(3)?,
+                })
             })
-        }).map_err(db_err)?;
+            .map_err(db_err)?;
 
         rows.collect::<Result<Vec<_>, _>>().map_err(db_err)
     }

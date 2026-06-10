@@ -13,7 +13,11 @@ fn full_pipeline_init_scan_decide_continue() {
     let engine = MemoryEngine::init(paths.clone(), "pipeline-test").unwrap();
 
     // Minimal source file for scanner
-    std::fs::write(tmp.path().join("main.rs"), "fn main() { println!(\"hello\"); }").unwrap();
+    std::fs::write(
+        tmp.path().join("main.rs"),
+        "fn main() { println!(\"hello\"); }",
+    )
+    .unwrap();
 
     ScannerEngine::new(&engine).scan().unwrap();
 

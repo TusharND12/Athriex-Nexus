@@ -1,6 +1,6 @@
 use nexus_core::{
-    Architecture, Decision, EdgeRelation, KnowledgeEdge, KnowledgeGraph, KnowledgeNode, NodeKind,
-    NexusResult, ScanResult, Task,
+    Architecture, Decision, EdgeRelation, KnowledgeEdge, KnowledgeGraph, KnowledgeNode,
+    NexusResult, NodeKind, ScanResult, Task,
 };
 use nexus_memory::{db_err, MemoryEngine};
 use uuid::Uuid;
@@ -41,7 +41,11 @@ impl<'a> KnowledgeEngine<'a> {
         self.persist_graph(graph)
     }
 
-    fn ingest_architecture(&self, graph: &mut KnowledgeGraph, arch: &Architecture) -> NexusResult<()> {
+    fn ingest_architecture(
+        &self,
+        graph: &mut KnowledgeGraph,
+        arch: &Architecture,
+    ) -> NexusResult<()> {
         for layer in &arch.layers {
             let layer_id = Uuid::new_v4();
             graph.nodes.push(KnowledgeNode {
@@ -103,8 +107,10 @@ impl<'a> KnowledgeEngine<'a> {
 
     fn persist_graph(&self, graph: &KnowledgeGraph) -> NexusResult<()> {
         let conn = self.memory.connection();
-        conn.execute("DELETE FROM knowledge_edges", []).map_err(db_err)?;
-        conn.execute("DELETE FROM knowledge_nodes", []).map_err(db_err)?;
+        conn.execute("DELETE FROM knowledge_edges", [])
+            .map_err(db_err)?;
+        conn.execute("DELETE FROM knowledge_nodes", [])
+            .map_err(db_err)?;
 
         for node in &graph.nodes {
             conn.execute(

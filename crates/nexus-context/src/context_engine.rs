@@ -1,8 +1,6 @@
 use chrono::Utc;
 use nexus_compression::{estimate_tokens, CompressionEngine};
-use nexus_core::{
-    ContinuationContext, NexusResult, TaskStatus,
-};
+use nexus_core::{ContinuationContext, NexusResult, TaskStatus};
 use nexus_decision::DecisionEngine;
 use nexus_git::GitEngine;
 use nexus_knowledge::KnowledgeEngine;
@@ -18,7 +16,11 @@ impl<'a> ContextEngine<'a> {
         Self { memory }
     }
 
-    pub fn continue_context(&self, compress: bool, max_tokens: usize) -> NexusResult<ContinuationContext> {
+    pub fn continue_context(
+        &self,
+        compress: bool,
+        max_tokens: usize,
+    ) -> NexusResult<ContinuationContext> {
         let memory = self.memory.load_memory()?;
         let architecture = self.memory.load_architecture()?;
         let decisions = DecisionEngine::new(self.memory).list_active()?;
@@ -31,12 +33,7 @@ impl<'a> ContextEngine<'a> {
             .tasks
             .iter()
             .find(|t| t.status == TaskStatus::InProgress)
-            .or_else(|| {
-                tasks
-                    .tasks
-                    .iter()
-                    .find(|t| t.status == TaskStatus::Pending)
-            })
+            .or_else(|| tasks.tasks.iter().find(|t| t.status == TaskStatus::Pending))
             .map(|t| t.title.clone())
             .unwrap_or_else(|| memory.current_focus.clone());
 
@@ -231,11 +228,7 @@ AI CONTINUATION PROMPT
     }
 }
 
-fn derive_next_action(
-    current_task: &str,
-    tasks: &[nexus_core::Task],
-    risks: &[String],
-) -> String {
+fn derive_next_action(current_task: &str, tasks: &[nexus_core::Task], risks: &[String]) -> String {
     if !current_task.is_empty() {
         return format!("Continue: {current_task}");
     }

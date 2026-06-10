@@ -1,7 +1,5 @@
 use chrono::Utc;
-use nexus_core::{
-    Decision, DecisionStatus, DecisionStore, NexusResult, TimelineEvent, TimelineEventKind,
-};
+use nexus_core::{Decision, DecisionStatus, NexusResult, TimelineEvent, TimelineEventKind};
 use nexus_memory::MemoryEngine;
 use uuid::Uuid;
 

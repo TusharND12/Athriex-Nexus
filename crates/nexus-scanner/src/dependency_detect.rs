@@ -174,8 +174,7 @@ pub fn detect_frameworks(project_root: &Path, deps: &[DependencyInfo]) -> Vec<St
         }
     }
 
-    if project_root.join("next.config.js").exists()
-        || project_root.join("next.config.mjs").exists()
+    if project_root.join("next.config.js").exists() || project_root.join("next.config.mjs").exists()
     {
         frameworks.insert("Next.js".to_string(), true);
     }

@@ -3,8 +3,8 @@ use std::path::PathBuf;
 
 use chrono::Utc;
 use nexus_core::{
-    AiSession, Architecture, Decision, DecisionStore, NexusPaths, NexusResult, ProjectMemory,
-    Task, TaskStore, Timeline, TimelineEvent, TimelineEventKind,
+    AiSession, Architecture, Decision, DecisionStore, NexusPaths, NexusResult, ProjectMemory, Task,
+    TaskStore, Timeline, TimelineEvent, TimelineEventKind,
 };
 use rusqlite::Connection;
 use uuid::Uuid;
@@ -185,7 +185,11 @@ impl MemoryEngine {
     }
 
     pub fn save_session(&self, session: &AiSession) -> NexusResult<PathBuf> {
-        let filename = format!("{}_{}.json", session.timestamp.format("%Y%m%d_%H%M%S"), session.id);
+        let filename = format!(
+            "{}_{}.json",
+            session.timestamp.format("%Y%m%d_%H%M%S"),
+            session.id
+        );
         let path = self.paths.sessions_dir().join(filename);
         write_json(&path, session)?;
 
@@ -214,24 +218,31 @@ impl MemoryEngine {
     }
 
     pub fn load_sessions(&self, limit: usize) -> NexusResult<Vec<AiSession>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT id, tool, prompt, response, files_modified, timestamp, notes, tags
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT id, tool, prompt, response, files_modified, timestamp, notes, tags
              FROM sessions ORDER BY timestamp DESC LIMIT ?1",
-        ).map_err(db_err)?;
-        let rows = stmt.query_map([limit as i64], |row| {
-            Ok(AiSession {
-                id: Uuid::parse_str(&row.get::<_, String>(0)?).unwrap_or_else(|_| Uuid::new_v4()),
-                tool: row.get(1)?,
-                prompt: row.get(2)?,
-                response: row.get(3)?,
-                files_modified: serde_json::from_str(&row.get::<_, String>(4)?).unwrap_or_default(),
-                timestamp: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .map(|d| d.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now()),
-                notes: row.get(6)?,
-                tags: serde_json::from_str(&row.get::<_, String>(7)?).unwrap_or_default(),
+            )
+            .map_err(db_err)?;
+        let rows = stmt
+            .query_map([limit as i64], |row| {
+                Ok(AiSession {
+                    id: Uuid::parse_str(&row.get::<_, String>(0)?)
+                        .unwrap_or_else(|_| Uuid::new_v4()),
+                    tool: row.get(1)?,
+                    prompt: row.get(2)?,
+                    response: row.get(3)?,
+                    files_modified: serde_json::from_str(&row.get::<_, String>(4)?)
+                        .unwrap_or_default(),
+                    timestamp: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
+                        .map(|d| d.with_timezone(&Utc))
+                        .unwrap_or_else(|_| Utc::now()),
+                    notes: row.get(6)?,
+                    tags: serde_json::from_str(&row.get::<_, String>(7)?).unwrap_or_default(),
+                })
             })
-        }).map_err(db_err)?;
+            .map_err(db_err)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(db_err)
     }
 
@@ -244,14 +255,15 @@ impl MemoryEngine {
     }
 
     fn index_fts(&self, doc_id: &str, source: &str, content: &str) -> NexusResult<()> {
-        self.conn.execute(
-            "DELETE FROM memory_fts WHERE doc_id = ?1",
-            [doc_id],
-        ).map_err(db_err)?;
-        self.conn.execute(
-            "INSERT INTO memory_fts (doc_id, source, content) VALUES (?1, ?2, ?3)",
-            rusqlite::params![doc_id, source, content],
-        ).map_err(db_err)?;
+        self.conn
+            .execute("DELETE FROM memory_fts WHERE doc_id = ?1", [doc_id])
+            .map_err(db_err)?;
+        self.conn
+            .execute(
+                "INSERT INTO memory_fts (doc_id, source, content) VALUES (?1, ?2, ?3)",
+                rusqlite::params![doc_id, source, content],
+            )
+            .map_err(db_err)?;
         Ok(())
     }
 }

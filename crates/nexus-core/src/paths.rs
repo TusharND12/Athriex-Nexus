@@ -105,8 +105,6 @@ mod tests {
     fn paths_layout() {
         let paths = NexusPaths::from_project_root("/tmp/myproject");
         assert_eq!(paths.nexus_root, PathBuf::from("/tmp/myproject/.nexus"));
-        assert!(paths
-            .memory_file()
-            .ends_with(".nexus/memory.json"));
+        assert!(paths.memory_file().ends_with(".nexus/memory.json"));
     }
 }

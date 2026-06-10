@@ -106,7 +106,8 @@ pub fn open_and_migrate(path: &std::path::Path) -> NexusResult<Connection> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let conn = Connection::open(path).map_err(|e| nexus_core::NexusError::Database(e.to_string()))?;
+    let conn =
+        Connection::open(path).map_err(|e| nexus_core::NexusError::Database(e.to_string()))?;
     conn.execute_batch(MIGRATIONS)
         .map_err(|e| nexus_core::NexusError::Database(e.to_string()))?;
     let version: i32 = conn

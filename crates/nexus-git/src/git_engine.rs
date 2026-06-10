@@ -51,10 +51,7 @@ impl GitEngine {
                     let author = commit.author();
                     recent_commits.push(CommitSummary {
                         hash: oid.to_string()[..8].to_string(),
-                        message: commit
-                            .summary()
-                            .unwrap_or("no message")
-                            .to_string(),
+                        message: commit.summary().unwrap_or("no message").to_string(),
                         author: author.name().unwrap_or("unknown").to_string(),
                         timestamp: Utc
                             .timestamp_opt(commit.time().seconds(), 0)

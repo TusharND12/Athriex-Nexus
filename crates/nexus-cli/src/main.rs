@@ -132,9 +132,7 @@ fn main() -> Result<()> {
             max_tokens,
             output,
         } => commands::handoff(&paths, compress, max_tokens, output),
-        Commands::Snapshot { label, description } => {
-            commands::snapshot(&paths, label, description)
-        }
+        Commands::Snapshot { label, description } => commands::snapshot(&paths, label, description),
         Commands::Restore { id } => commands::restore(&paths, id),
         Commands::Timeline { limit } => commands::timeline(&paths, limit),
         Commands::Decide {

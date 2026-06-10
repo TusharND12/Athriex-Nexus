@@ -18,7 +18,9 @@ impl CompressionEngine {
         compressed.completed_work = truncate_list(&compressed.completed_work, ratio);
         compressed.important_decisions = truncate_list(&compressed.important_decisions, ratio);
         compressed.risks = truncate_list(&compressed.risks, ratio);
-        compressed.important_files.truncate((compressed.important_files.len() as f32 * ratio) as usize);
+        compressed
+            .important_files
+            .truncate((compressed.important_files.len() as f32 * ratio) as usize);
 
         compressed.architecture_summary = truncate_text(&compressed.architecture_summary, ratio);
         compressed.project_overview = truncate_text(&compressed.project_overview, ratio);
@@ -83,7 +85,9 @@ pub fn estimate_tokens(text: &str) -> usize {
 }
 
 fn truncate_list(items: &[String], ratio: f32) -> Vec<String> {
-    let keep = ((items.len() as f32 * ratio).ceil() as usize).max(1).min(items.len());
+    let keep = ((items.len() as f32 * ratio).ceil() as usize)
+        .max(1)
+        .min(items.len());
     items.iter().take(keep).cloned().collect()
 }
 

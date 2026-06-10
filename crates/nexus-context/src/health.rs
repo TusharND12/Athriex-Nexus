@@ -54,11 +54,12 @@ impl<'a> HealthAnalyzer<'a> {
         let maintainability = HealthMetric {
             score: {
                 let decision_bonus = (decisions.decisions.len() as f32 * 2.0).min(20.0);
-                let memory_freshness = if memory.updated_at > chrono::Utc::now() - chrono::Duration::days(7) {
-                    20.0
-                } else {
-                    5.0
-                };
+                let memory_freshness =
+                    if memory.updated_at > chrono::Utc::now() - chrono::Duration::days(7) {
+                        20.0
+                    } else {
+                        5.0
+                    };
                 (50.0 + decision_bonus + memory_freshness).min(100.0)
             },
             summary: format!(

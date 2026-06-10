@@ -34,10 +34,7 @@ pub fn init(paths: &NexusPaths, name: Option<String>) -> Result<()> {
     let nxp = NxpEngine::new(&engine);
     let nxp_path = nxp.write_to_file()?;
 
-    println!(
-        "{} Athreix Nexus initialized",
-        "✓".green().bold()
-    );
+    println!("{} Athreix Nexus initialized", "✓".green().bold());
     println!("  Memory:   {}", engine.paths.nexus_root.display());
     println!("  Protocol: {}", nxp_path.display());
     println!();
@@ -106,17 +103,17 @@ pub fn handoff(
     Ok(())
 }
 
-pub fn snapshot(
-    paths: &NexusPaths,
-    label: String,
-    description: Option<String>,
-) -> Result<()> {
+pub fn snapshot(paths: &NexusPaths, label: String, description: Option<String>) -> Result<()> {
     let engine = open_engine(paths)?;
     let manifest = SnapshotEngine::new(&engine)
         .create(label, description)
         .map_err(|e| anyhow::anyhow!(e))?;
 
-    println!("{} Snapshot created: {}", "✓".green().bold(), manifest.label);
+    println!(
+        "{} Snapshot created: {}",
+        "✓".green().bold(),
+        manifest.label
+    );
     println!("  ID:        {}", manifest.id);
     println!("  Decisions: {}", manifest.decisions_count);
     println!("  Tasks:     {}", manifest.tasks_count);
@@ -154,7 +151,11 @@ pub fn timeline(paths: &NexusPaths, limit: usize) -> Result<()> {
         let kind = format!("{:?}", event.kind).to_lowercase();
         println!(
             "  {} {} {}",
-            event.timestamp.format("%Y-%m-%d %H:%M").to_string().dimmed(),
+            event
+                .timestamp
+                .format("%Y-%m-%d %H:%M")
+                .to_string()
+                .dimmed(),
             format!("[{kind}]").cyan(),
             event.title
         );
@@ -208,10 +209,7 @@ pub fn health(paths: &NexusPaths) -> Result<()> {
 
     println!("{}", "PROJECT HEALTH".bold());
     println!();
-    println!(
-        "  Overall Score: {}",
-        score_bar(report.overall_score)
-    );
+    println!("  Overall Score: {}", score_bar(report.overall_score));
     println!();
     print_metric("Technical Debt", &report.technical_debt);
     print_metric("Dependency Risk", &report.dependency_risk);
@@ -262,7 +260,11 @@ pub fn import_nxp(paths: &NexusPaths, file: Option<std::path::PathBuf>) -> Resul
         .import(&doc)
         .map_err(|e| anyhow::anyhow!(e))?;
 
-    println!("{} Imported NXP from {}", "✓".green().bold(), path.display());
+    println!(
+        "{} Imported NXP from {}",
+        "✓".green().bold(),
+        path.display()
+    );
     Ok(())
 }
 
@@ -334,5 +336,10 @@ fn score_bar(score: f32) -> String {
 }
 
 fn print_metric(name: &str, metric: &nexus_core::HealthMetric) {
-    println!("  {:<18} {} — {}", name, score_bar(metric.score), metric.summary);
+    println!(
+        "  {:<18} {} — {}",
+        name,
+        score_bar(metric.score),
+        metric.summary
+    );
 }

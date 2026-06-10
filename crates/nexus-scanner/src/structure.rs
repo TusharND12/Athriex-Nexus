@@ -68,8 +68,7 @@ fn classify_path(rel: &str) -> ComponentKind {
         || lower.contains("/ui/")
         || lower.contains("/components/")
         || lower.contains("/pages/")
-        || lower.contains("/app/")
-        && !lower.contains("/api/")
+        || lower.contains("/app/") && !lower.contains("/api/")
     {
         return ComponentKind::Frontend;
     }
@@ -110,7 +109,10 @@ fn classify_path(rel: &str) -> ComponentKind {
     ComponentKind::Other
 }
 
-fn truncate_components(mut components: Vec<ArchitectureComponent>, max: usize) -> Vec<ArchitectureComponent> {
+fn truncate_components(
+    mut components: Vec<ArchitectureComponent>,
+    max: usize,
+) -> Vec<ArchitectureComponent> {
     if components.len() > max {
         components.truncate(max);
     }
