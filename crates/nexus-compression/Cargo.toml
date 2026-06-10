@@ -1,0 +1,13 @@
+[package]
+name = "nexus-compression"
+description = "Compression Engine — token-efficient context packaging for Athreix Nexus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+nexus-core.workspace = true
+
+[dev-dependencies]
+chrono.workspace = true

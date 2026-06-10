@@ -1,0 +1,13 @@
+[package]
+name = "nexus-git"
+description = "Git Engine — repository analysis for Athreix Nexus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+chrono.workspace = true
+git2.workspace = true
+nexus-core.workspace = true
+walkdir.workspace = true

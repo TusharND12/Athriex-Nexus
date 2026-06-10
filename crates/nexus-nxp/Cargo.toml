@@ -1,0 +1,17 @@
+[package]
+name = "nexus-nxp"
+description = "NXP Engine — Nexus Protocol export/import for Athreix Nexus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+chrono.workspace = true
+nexus-core.workspace = true
+nexus-git.workspace = true
+nexus-knowledge.workspace = true
+nexus-memory.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true

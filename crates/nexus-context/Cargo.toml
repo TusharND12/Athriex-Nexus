@@ -1,0 +1,17 @@
+[package]
+name = "nexus-context"
+description = "Context Engine — project state reconstruction for Athreix Nexus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+chrono.workspace = true
+nexus-compression.workspace = true
+nexus-core.workspace = true
+nexus-decision.workspace = true
+nexus-git.workspace = true
+nexus-knowledge.workspace = true
+nexus-memory.workspace = true
+nexus-scanner.workspace = true

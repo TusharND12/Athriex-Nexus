@@ -1,0 +1,15 @@
+[package]
+name = "nexus-handoff"
+description = "Handoff Engine — universal AI continuation prompts for Athreix Nexus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+chrono.workspace = true
+nexus-context.workspace = true
+nexus-core.workspace = true
+nexus-memory.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
