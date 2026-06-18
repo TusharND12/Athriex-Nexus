@@ -41,7 +41,11 @@ impl<'a> DecisionEngine<'a> {
         let mut store = self.memory.load_decisions()?;
 
         let mut superseded_id: Option<Uuid> = None;
-        if let Some(prefix) = supersedes.as_deref().map(str::trim).filter(|p| !p.is_empty()) {
+        if let Some(prefix) = supersedes
+            .as_deref()
+            .map(str::trim)
+            .filter(|p| !p.is_empty())
+        {
             match store
                 .decisions
                 .iter_mut()

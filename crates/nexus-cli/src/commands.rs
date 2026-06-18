@@ -242,10 +242,7 @@ pub fn impact(paths: &NexusPaths, file: String) -> Result<()> {
     println!("{}", "IMPACT ANALYSIS".bold());
     println!();
     if report.matched_files.is_empty() {
-        println!(
-            "  No file in the knowledge graph matches {}.",
-            file.cyan()
-        );
+        println!("  No file in the knowledge graph matches {}.", file.cyan());
         println!("  Run `nexus scan` first, or check the path.");
         return Ok(());
     }

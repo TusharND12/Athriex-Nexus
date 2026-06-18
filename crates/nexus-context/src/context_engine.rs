@@ -59,7 +59,10 @@ impl<'a> ContextEngine<'a> {
             Some(task) => {
                 let mut dec = HashSet::new();
                 let mut files = HashSet::new();
-                for hit in SearchEngine::new(self.memory).ask(task, 30).unwrap_or_default() {
+                for hit in SearchEngine::new(self.memory)
+                    .ask(task, 30)
+                    .unwrap_or_default()
+                {
                     match hit.source.as_str() {
                         "decision" => {
                             dec.insert(hit.doc_id);

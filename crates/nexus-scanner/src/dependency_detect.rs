@@ -18,7 +18,10 @@ pub fn detect_dependencies(project_root: &Path) -> Vec<DependencyInfo> {
 }
 
 fn parse_cargo_toml(path: &Path) -> Vec<DependencyInfo> {
-    parse_cargo_toml_sections(path, &["dependencies", "dev-dependencies", "build-dependencies"])
+    parse_cargo_toml_sections(
+        path,
+        &["dependencies", "dev-dependencies", "build-dependencies"],
+    )
 }
 
 fn parse_workspace_cargo_toml(path: &Path) -> Vec<DependencyInfo> {

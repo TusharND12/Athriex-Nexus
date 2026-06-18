@@ -74,7 +74,10 @@ impl<'a> SearchEngine<'a> {
     pub fn format_answer(&self, query: &str, limit: usize) -> NexusResult<String> {
         let trimmed = query.trim();
         if trimmed.is_empty() {
-            return Ok("Please provide a search query.\nExample: nexus ask \"authentication flow\"".to_string());
+            return Ok(
+                "Please provide a search query.\nExample: nexus ask \"authentication flow\""
+                    .to_string(),
+            );
         }
 
         let hits = self.ask(trimmed, limit)?;

@@ -23,10 +23,7 @@ pub fn write_json<T: Serialize>(path: &Path, value: &T) -> NexusResult<()> {
 
     let data = serde_json::to_string_pretty(value)?;
 
-    let file_name = path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("nexus");
+    let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("nexus");
     let tmp = parent.join(format!(".{file_name}.tmp"));
 
     {
