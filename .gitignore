@@ -7,3 +7,8 @@ Thumbs.db
 .vscode/
 *.swp
 .nexus/
+
+# npm: platform binary is downloaded at install time, never committed
+npm/bin/nexus
+npm/bin/nexus.exe
+npm/*.tgz

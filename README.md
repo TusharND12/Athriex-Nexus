@@ -11,7 +11,11 @@ Athreix Nexus is a local-first, offline-first, cross-platform CLI that acts as a
 ## Quick Start
 
 ```bash
-# Install Rust: https://rustup.rs
+# Option A — npm (no Rust toolchain needed)
+npx @athreix/nexus --help
+#   or: npm install -g @athreix/nexus
+
+# Option B — from source (requires Rust: https://rustup.rs)
 cargo install --path crates/nexus-cli
 
 # In your project
@@ -20,6 +24,8 @@ nexus scan
 nexus decide "Use SQLite for offline-first local storage"
 nexus continue
 ```
+
+> Publishing a new version? See [docs/PUBLISHING.md](docs/PUBLISHING.md).
 
 ## Core Commands
 
