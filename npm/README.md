@@ -1,4 +1,4 @@
-# @athreix/nexus
+# athreix-nexus
 
 **Never explain your project to an AI twice.**
 
@@ -11,10 +11,10 @@ context an AI assistant needs to continue your work.
 
 ```bash
 # Run instantly, no install
-npx @athreix/nexus --help
+npx athreix-nexus --help
 
 # Or install globally
-npm install -g @athreix/nexus
+npm install -g athreix-nexus
 nexus --help
 ```
 

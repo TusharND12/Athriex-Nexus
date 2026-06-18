@@ -12,8 +12,8 @@ Athreix Nexus is a local-first, offline-first, cross-platform CLI that acts as a
 
 ```bash
 # Option A — npm (no Rust toolchain needed)
-npx @athreix/nexus --help
-#   or: npm install -g @athreix/nexus
+npx athreix-nexus --help
+#   or: npm install -g athreix-nexus
 
 # Option B — from source (requires Rust: https://rustup.rs)
 cargo install --path crates/nexus-cli

@@ -3,7 +3,7 @@
 Athreix Nexus ships in two layers:
 
 1. **GitHub Releases** — prebuilt binaries for Windows / macOS / Linux.
-2. **npm (`@athreix/nexus`)** — a thin wrapper that downloads the matching
+2. **npm (`athreix-nexus`)** — a thin wrapper that downloads the matching
    binary on install. The published npm package contains only JavaScript.
 
 Both are produced automatically by [`.github/workflows/release.yml`](../.github/workflows/release.yml)
@@ -38,7 +38,7 @@ when you push a version tag.
 4. The `Release` workflow then:
    - builds the four platform binaries and uploads them (+ `.sha256`) to the
      GitHub Release for the tag, then
-   - publishes `@athreix/nexus` to npm at the tag's version.
+   - publishes `athreix-nexus` to npm at the tag's version.
 
 > Order matters: the npm `publish-npm` job runs **after** the binaries job, so the
 > binaries exist before anyone can `npm install` that version (the installer
@@ -47,8 +47,8 @@ when you push a version tag.
 ## Verifying
 
 ```bash
-npx @athreix/nexus@latest --version
-npm install -g @athreix/nexus && nexus --help
+npx athreix-nexus@latest --version
+npm install -g athreix-nexus && nexus --help
 ```
 
 ## Manual publish (fallback, no CI)

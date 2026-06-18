@@ -74,18 +74,37 @@ jobs:
     needs: binaries
     runs-on: ubuntu-latest
     steps:
+      # The `secrets` context can't be used in a job-level `if`, so detect the
+      # token in a step and gate the rest. Without NPM_TOKEN the job is a no-op
+      # (stays green) — publish manually with `npm publish`, or add the secret.
+      - name: Check for npm token
+        id: token
+        run: |
+          if [ -n "${NPM_TOKEN}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NPM_TOKEN not set — skipping npm publish."
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - uses: actions/checkout@v4
+        if: steps.token.outputs.present == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.token.outputs.present == 'true'
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
 
       - name: Sync package version from tag
+        if: steps.token.outputs.present == 'true'
         working-directory: npm
         run: npm version --no-git-tag-version --allow-same-version "${GITHUB_REF_NAME#v}"
 
       - name: Publish
+        if: steps.token.outputs.present == 'true'
         working-directory: npm
         run: npm publish --access public
         env:

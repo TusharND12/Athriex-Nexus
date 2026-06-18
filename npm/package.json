@@ -1,5 +1,5 @@
 {
-  "name": "@athreix/nexus",
+  "name": "athreix-nexus",
   "version": "0.1.0",
   "description": "Athreix Nexus — local-first, offline-first persistent memory layer for software projects. Never explain your project to an AI twice.",
   "bin": {
