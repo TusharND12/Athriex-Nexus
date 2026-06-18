@@ -15,3 +15,4 @@ nexus-git.workspace = true
 nexus-knowledge.workspace = true
 nexus-memory.workspace = true
 nexus-scanner.workspace = true
+nexus-search.workspace = true

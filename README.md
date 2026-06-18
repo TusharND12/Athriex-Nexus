@@ -27,16 +27,17 @@ nexus continue
 |---------|-------------|
 | `nexus init` | Create `.nexus/` memory layer |
 | `nexus scan` | Analyze code, deps, git, architecture |
-| `nexus continue` | **Flagship** — full AI continuation context |
+| `nexus continue` | **Flagship** — full AI continuation context (use `--task "…"` to focus it) |
 | `nexus handoff` | Universal AI handoff prompt |
 | `nexus snapshot` | Memory checkpoint |
 | `nexus restore` | Restore checkpoint |
 | `nexus timeline` | Project evolution chronology |
-| `nexus decide` | Record architectural decision |
+| `nexus decide` | Record architectural decision (`--supersedes <id>` to replace one) |
 | `nexus decisions` | List all decisions |
 | `nexus ask` | Search project memory |
 | `nexus health` | Project health score |
 | `nexus map` | Architecture tree |
+| `nexus impact` | Trace what a file connects to in the knowledge graph |
 | `nexus export` | Write `project.nxp` |
 | `nexus session` | Record AI session |
 

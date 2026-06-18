@@ -31,7 +31,7 @@
 - [ ] Symbol-level knowledge graph (function call edges via tree-sitter)
 - [ ] Auto-task detection from git commits
 - [ ] `nexus watch` — filesystem watcher for incremental scans
-- [ ] Decision supersession (`nexus decide --supersedes <id>`)
+- [x] Decision supersession (`nexus decide --supersedes <id>`)
 - [ ] Team merge protocol for `.nexus/` conflicts
 - [ ] Shell completions (bash, zsh, fish, powershell)
 - [ ] Pre-commit hook template

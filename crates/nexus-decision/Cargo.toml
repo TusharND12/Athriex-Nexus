@@ -12,3 +12,6 @@ nexus-core.workspace = true
 nexus-memory.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

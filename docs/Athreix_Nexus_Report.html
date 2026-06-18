@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Athreix Nexus — Technical Report</title>
+<style>
+  :root {
+    --navy: #102A43;
+    --navy-2: #1B3A5B;
+    --accent: #2563EB;
+    --accent-soft: #E8F0FE;
+    --ink: #243B53;
+    --muted: #627D98;
+    --line: #D9E2EC;
+    --code-bg: #F5F7FA;
+    --zebra: #F7F9FC;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 11.5px;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+  }
+
+  /* ---------- Cover ---------- */
+  .cover {
+    height: 247mm;
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 60%, var(--accent) 140%);
+    color: #fff;
+    padding: 30mm 20mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    page-break-after: always;
+  }
+  .cover .brand {
+    letter-spacing: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    opacity: 0.85;
+  }
+  .cover .brand span { color: #8FB7FF; }
+  .cover h1 {
+    font-size: 52px;
+    margin: 0 0 6px 0;
+    font-weight: 700;
+    line-height: 1.05;
+  }
+  .cover .tagline {
+    font-size: 18px;
+    font-weight: 300;
+    opacity: 0.9;
+    font-style: italic;
+    margin-bottom: 18px;
+  }
+  .cover .summary {
+    font-size: 13px;
+    max-width: 130mm;
+    opacity: 0.92;
+    line-height: 1.7;
+  }
+  .cover .meta {
+    border-top: 1px solid rgba(255,255,255,0.3);
+    padding-top: 14px;
+    font-size: 12px;
+  }
+  .cover .meta table { border-collapse: collapse; }
+  .cover .meta td { padding: 3px 28px 3px 0; }
+  .cover .meta td.k { opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
+
+  /* ---------- Sections ---------- */
+  h2 {
+    color: var(--navy);
+    font-size: 20px;
+    margin: 0 0 4px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--accent);
+    page-break-after: avoid;
+  }
+  h2 .num { color: var(--accent); font-weight: 700; margin-right: 8px; }
+  h3 {
+    color: var(--navy-2);
+    font-size: 14px;
+    margin: 18px 0 6px 0;
+    page-break-after: avoid;
+  }
+  .section { page-break-before: always; padding-top: 2mm; }
+
+  p { margin: 6px 0; }
+  .lead { color: var(--muted); font-size: 12.5px; margin-bottom: 14px; }
+
+  code {
+    font-family: "Cascadia Code", "Consolas", monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10.5px;
+    color: #0B3D91;
+  }
+  pre {
+    background: var(--code-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 10px;
+    line-height: 1.55;
+    overflow-x: auto;
+    color: #243B53;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 16px 0;
+    font-size: 10.5px;
+    page-break-inside: auto;
+  }
+  th {
+    background: var(--navy);
+    color: #fff;
+    text-align: left;
+    padding: 7px 10px;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+  }
+  td { padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--zebra); }
+  td.cmd code { background: var(--accent-soft); color: var(--navy); border-color: #CBDCF9; white-space: nowrap; }
+
+  .badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid #CBDCF9;
+    border-radius: 10px;
+    padding: 1px 9px;
+    font-size: 9.5px;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .badge.green { background: #E3F9E5; color: #0B8043; border-color: #B7E4C7; }
+  .badge.amber { background: #FFF4E5; color: #B26A00; border-color: #FFE0B2; }
+
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: #fff;
+    page-break-inside: avoid;
+  }
+  .card h4 { margin: 0 0 4px 0; color: var(--navy); font-size: 12.5px; }
+  .card p { margin: 0; font-size: 10.5px; color: var(--muted); }
+
+  .toc { font-size: 12px; }
+  .toc div { padding: 5px 0; border-bottom: 1px dotted var(--line); }
+  .toc .n { color: var(--accent); font-weight: 700; display: inline-block; width: 26px; }
+
+  .footnote { color: var(--muted); font-size: 9.5px; margin-top: 24px; border-top: 1px solid var(--line); padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div>
+    <div class="brand">ATH<span>R</span>EIX &nbsp;&bull;&nbsp; NEXUS</div>
+  </div>
+  <div>
+    <h1>Athreix&nbsp;Nexus</h1>
+    <div class="tagline">Never explain your project to an AI twice.</div>
+    <div class="summary">
+      A local-first, offline-first, cross-platform command-line tool that acts as a
+      persistent memory layer for software projects. Where Git stores source code,
+      Nexus stores project knowledge — decisions, architecture, timeline, and the
+      context an AI assistant needs to continue your work.
+    </div>
+  </div>
+  <div class="meta">
+    <table>
+      <tr><td class="k">Document</td><td>Technical Report &amp; Command Reference</td></tr>
+      <tr><td class="k">Version</td><td>0.1.0</td></tr>
+      <tr><td class="k">Author</td><td>Tushar Dhokane &nbsp;/&nbsp; Athreix</td></tr>
+      <tr><td class="k">Date</td><td>18 June 2026</td></tr>
+      <tr><td class="k">License</td><td>MIT</td></tr>
+      <tr><td class="k">Language</td><td>Rust (2021 edition) &mdash; 13-crate workspace</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============ TOC ============ -->
+<div class="section">
+  <h2><span class="num">&mdash;</span>Contents</h2>
+  <div class="toc">
+    <div><span class="n">1</span> Executive Summary</div>
+    <div><span class="n">2</span> Philosophy &amp; Positioning</div>
+    <div><span class="n">3</span> System Architecture</div>
+    <div><span class="n">4</span> Project Layout</div>
+    <div><span class="n">5</span> Command Reference (complete)</div>
+    <div><span class="n">6</span> Data &amp; Persistence</div>
+    <div><span class="n">7</span> NXP — Nexus Protocol</div>
+    <div><span class="n">8</span> Reliability &amp; Recent Enhancements</div>
+    <div><span class="n">9</span> Build, Test &amp; Install</div>
+    <div><span class="n">10</span> Roadmap</div>
+  </div>
+</div>
+
+<!-- ============ 1 ============ -->
+<div class="section">
+  <h2><span class="num">1</span>Executive Summary</h2>
+  <p class="lead">What Nexus is, and the problem it solves.</p>
+  <p>
+    Modern software development increasingly happens alongside AI assistants. Yet every
+    new chat session starts from zero: the developer re-explains the architecture, the
+    decisions already made, the current task, and the constraints. <strong>Athreix Nexus
+    eliminates that repetition.</strong> It maintains a durable, structured memory of a
+    project on disk and reconstructs a complete continuation context on demand.
+  </p>
+  <div class="grid">
+    <div class="card"><h4>Local &amp; Offline</h4><p>Zero network calls. All memory lives in a <code>.nexus/</code> folder beside your code.</p></div>
+    <div class="card"><h4>Universal Handoff</h4><p>Generates context compatible with Claude, ChatGPT, Gemini, Cursor, Windsurf and open agents.</p></div>
+    <div class="card"><h4>Structured Memory</h4><p>Decisions, architecture, timeline, tasks, and a knowledge graph — not free-form notes.</p></div>
+    <div class="card"><h4>Fast &amp; Portable</h4><p>Single optimized Rust binary (~10&nbsp;MB), SQLite + JSON storage, cross-platform.</p></div>
+  </div>
+  <table>
+    <tr><th style="width:50%">Git stores</th><th style="width:50%">Nexus stores</th></tr>
+    <tr><td>Source code</td><td>Project knowledge</td></tr>
+    <tr><td>Commits &amp; diffs</td><td>Decisions &amp; rationale</td></tr>
+    <tr><td>Branches</td><td>Timeline, tasks &amp; AI sessions</td></tr>
+  </table>
+</div>
+
+<!-- ============ 2 ============ -->
+<div class="section">
+  <h2><span class="num">2</span>Philosophy &amp; Positioning</h2>
+  <p>Nexus is deliberately <strong>not</strong> a SaaS dashboard, a project-management tool, or a note app. It is infrastructure.</p>
+  <div class="grid">
+    <div class="card"><h4>Git for AI Context</h4><p>Version-controlled, portable project understanding.</p></div>
+    <div class="card"><h4>Memory OS</h4><p>A persistent knowledge layer for software projects.</p></div>
+    <div class="card"><h4>Handoff Infrastructure</h4><p>A universal protocol for transferring context to any AI.</p></div>
+    <div class="card"><h4>Terminal-native</h4><p>Everything works from the CLI. Offline. Local. Cross-platform.</p></div>
+  </div>
+</div>
+
+<!-- ============ 3 ============ -->
+<div class="section">
+  <h2><span class="num">3</span>System Architecture</h2>
+  <p class="lead">A 13-crate clean architecture in Rust, with strict layer separation.</p>
+  <table>
+    <tr><th style="width:28%">Crate</th><th>Responsibility</th></tr>
+    <tr><td class="cmd"><code>nexus-cli</code></td><td>CLI layer — argument parsing (clap) and command dispatch</td></tr>
+    <tr><td class="cmd"><code>nexus-core</code></td><td>Shared types, models, paths, and error definitions</td></tr>
+    <tr><td class="cmd"><code>nexus-memory</code></td><td>Memory engine — SQLite + JSON persistence, atomic writes</td></tr>
+    <tr><td class="cmd"><code>nexus-context</code></td><td>Context engine — continuation-context reconstruction</td></tr>
+    <tr><td class="cmd"><code>nexus-knowledge</code></td><td>Knowledge engine — graph of files, decisions, tasks, packages</td></tr>
+    <tr><td class="cmd"><code>nexus-git</code></td><td>Git engine — branch, commit history, dirty-file summary (git2)</td></tr>
+    <tr><td class="cmd"><code>nexus-scanner</code></td><td>Scanner engine — tree-sitter parsing &amp; dependency detection</td></tr>
+    <tr><td class="cmd"><code>nexus-decision</code></td><td>Decision engine — architectural decision records (ADR)</td></tr>
+    <tr><td class="cmd"><code>nexus-snapshot</code></td><td>Snapshot engine — memory checkpoints &amp; restore</td></tr>
+    <tr><td class="cmd"><code>nexus-handoff</code></td><td>Handoff engine — universal AI continuation prompt</td></tr>
+    <tr><td class="cmd"><code>nexus-compression</code></td><td>Compression engine — token-budget context reduction</td></tr>
+    <tr><td class="cmd"><code>nexus-search</code></td><td>Search engine — SQLite FTS5 full-text memory search</td></tr>
+    <tr><td class="cmd"><code>nexus-nxp</code></td><td>NXP engine — portable Nexus Protocol export/import</td></tr>
+  </table>
+  <h3>Technology Stack</h3>
+  <p>
+    <span class="badge">Rust 2021</span>
+    <span class="badge">clap</span>
+    <span class="badge">rusqlite + FTS5</span>
+    <span class="badge">tree-sitter</span>
+    <span class="badge">git2</span>
+    <span class="badge">serde / serde_json</span>
+    <span class="badge">rayon</span>
+    <span class="badge">chrono</span>
+    <span class="badge">uuid</span>
+    <span class="badge">sha2</span>
+  </p>
+  <p>Tree-sitter grammars: Rust, JavaScript, TypeScript, Python. Release profile uses LTO, a single codegen unit, and symbol stripping for a compact binary.</p>
+</div>
+
+<!-- ============ 4 ============ -->
+<div class="section">
+  <h2><span class="num">4</span>Project Layout</h2>
+  <p>Every Nexus-enabled project contains a single <code>.nexus/</code> directory:</p>
+<pre><code>.nexus/
+├── memory.json          # Project identity &amp; focus
+├── architecture.json    # Layers, tech, important files
+├── timeline.json        # Chronological events
+├── decisions.json       # Architectural decisions (ADR)
+├── tasks.json           # Work tracking
+├── sessions/            # AI session records
+├── snapshots/           # Memory checkpoints
+├── knowledge.db         # SQLite + FTS5 search + graph
+└── project.nxp          # Portable Nexus Protocol export</code></pre>
+</div>
+
+<!-- ============ 5 ============ -->
+<div class="section">
+  <h2><span class="num">5</span>Command Reference</h2>
+  <p class="lead">All 16 commands. Global option <code>-p, --path &lt;PATH&gt;</code> selects the project directory (defaults to the current directory).</p>
+
+  <table>
+    <tr><th style="width:34%">Command</th><th>Description</th></tr>
+    <tr><td class="cmd"><code>nexus init</code></td><td>Create the <code>.nexus/</code> memory layer in the current project</td></tr>
+    <tr><td class="cmd"><code>nexus scan</code></td><td>Analyze source code, dependencies, and git history</td></tr>
+    <tr><td class="cmd"><code>nexus continue</code></td><td><strong>Flagship</strong> — reconstruct complete project understanding</td></tr>
+    <tr><td class="cmd"><code>nexus handoff</code></td><td>Generate a universal AI continuation handoff prompt</td></tr>
+    <tr><td class="cmd"><code>nexus snapshot</code></td><td>Create a memory checkpoint</td></tr>
+    <tr><td class="cmd"><code>nexus restore</code></td><td>Restore a previous memory checkpoint</td></tr>
+    <tr><td class="cmd"><code>nexus timeline</code></td><td>Display chronological project evolution</td></tr>
+    <tr><td class="cmd"><code>nexus decide</code></td><td>Record an architectural decision</td></tr>
+    <tr><td class="cmd"><code>nexus decisions</code></td><td>Display all stored decisions</td></tr>
+    <tr><td class="cmd"><code>nexus ask</code></td><td>Semantic / full-text search across project memory</td></tr>
+    <tr><td class="cmd"><code>nexus health</code></td><td>Analyze project health score</td></tr>
+    <tr><td class="cmd"><code>nexus map</code></td><td>Generate an architecture map</td></tr>
+    <tr><td class="cmd"><code>nexus impact</code></td><td>Trace what a file connects to in the knowledge graph</td></tr>
+    <tr><td class="cmd"><code>nexus export</code></td><td>Export <code>project.nxp</code> (Nexus Protocol)</td></tr>
+    <tr><td class="cmd"><code>nexus import</code></td><td>Import <code>project.nxp</code></td></tr>
+    <tr><td class="cmd"><code>nexus session</code></td><td>Record an AI session</td></tr>
+  </table>
+
+  <h3>Options &amp; flags per command</h3>
+  <table>
+    <tr><th style="width:24%">Command</th><th style="width:40%">Flags</th><th>Notes</th></tr>
+    <tr><td class="cmd"><code>init</code></td><td><code>-n, --name &lt;NAME&gt;</code></td><td>Defaults to the directory name</td></tr>
+    <tr><td class="cmd"><code>scan</code></td><td>—</td><td>Builds architecture + knowledge graph</td></tr>
+    <tr><td class="cmd"><code>continue</code></td><td><code>-c, --compress</code> &middot; <code>--max-tokens &lt;N=8000&gt;</code> &middot; <code>-o, --output &lt;FILE&gt;</code> &middot; <code>-t, --task &lt;TEXT&gt;</code></td><td><code>--task</code> ranks memory by relevance to a focus task</td></tr>
+    <tr><td class="cmd"><code>handoff</code></td><td><code>-c, --compress</code> &middot; <code>--max-tokens &lt;N=8000&gt;</code> &middot; <code>-o, --output &lt;FILE&gt;</code></td><td>Emits an XML handoff envelope</td></tr>
+    <tr><td class="cmd"><code>snapshot</code></td><td><code>&lt;LABEL&gt;</code> &middot; <code>-d, --description &lt;TEXT&gt;</code></td><td>Label is positional &amp; required</td></tr>
+    <tr><td class="cmd"><code>restore</code></td><td><code>&lt;ID&gt;</code></td><td>Snapshot ID prefix or label</td></tr>
+    <tr><td class="cmd"><code>timeline</code></td><td><code>-l, --limit &lt;N=50&gt;</code></td><td>Most recent events first</td></tr>
+    <tr><td class="cmd"><code>decide</code></td><td><code>&lt;CONTENT&gt;</code> &middot; <code>-r, --rationale &lt;TEXT&gt;</code> &middot; <code>-t, --tag &lt;TAG&gt;</code> (repeatable) &middot; <code>-s, --supersedes &lt;ID&gt;</code></td><td><code>--supersedes</code> marks a prior decision (by ID prefix) as superseded</td></tr>
+    <tr><td class="cmd"><code>decisions</code></td><td>—</td><td>Lists all decisions chronologically</td></tr>
+    <tr><td class="cmd"><code>ask</code></td><td><code>&lt;QUERY&gt;</code> &middot; <code>-l, --limit &lt;N=10&gt;</code></td><td>FTS5 + graph + decision search</td></tr>
+    <tr><td class="cmd"><code>health</code></td><td>—</td><td>Debt, dependency risk, docs, complexity, maintainability</td></tr>
+    <tr><td class="cmd"><code>map</code></td><td>—</td><td>Architecture tree (requires a prior scan)</td></tr>
+    <tr><td class="cmd"><code>impact</code></td><td><code>&lt;FILE&gt;</code></td><td>Path or fragment; shows connected nodes &amp; relations</td></tr>
+    <tr><td class="cmd"><code>export</code></td><td>—</td><td>Writes <code>.nexus/project.nxp</code></td></tr>
+    <tr><td class="cmd"><code>import</code></td><td><code>-f, --file &lt;PATH&gt;</code></td><td>Defaults to <code>.nexus/project.nxp</code></td></tr>
+    <tr><td class="cmd"><code>session</code></td><td><code>-p, --prompt &lt;P&gt;</code> &middot; <code>-r, --response &lt;R&gt;</code> &middot; <code>-t, --tool &lt;T&gt;</code> &middot; <code>-f, --file &lt;F&gt;</code> (repeatable) &middot; <code>-n, --notes &lt;N&gt;</code></td><td>Records an AI interaction into memory</td></tr>
+  </table>
+
+  <h3>Typical workflow</h3>
+<pre><code># 1. Initialize and analyze
+nexus init
+nexus scan
+
+# 2. Record knowledge as you work
+nexus decide "Use SQLite for offline-first local storage" --rationale "no server dependency"
+nexus decide "Use Postgres for the API" --supersedes 9b353bf8
+
+# 3. Reconstruct context for an AI assistant
+nexus continue --task "implement the search index"
+nexus continue --compress --max-tokens 4000 --output context.txt
+nexus handoff --output handoff.xml
+
+# 4. Explore &amp; maintain
+nexus impact db.rs
+nexus ask "authentication flow"
+nexus map
+nexus health
+nexus snapshot "before-refactor" --description "stable checkpoint"
+nexus restore before-refactor</code></pre>
+</div>
+
+<!-- ============ 6 ============ -->
+<div class="section">
+  <h2><span class="num">6</span>Data &amp; Persistence</h2>
+  <p>Nexus uses <strong>dual persistence</strong>: human-readable JSON for portability and inspection, and SQLite for indexed querying.</p>
+  <h3>SQLite (knowledge.db)</h3>
+  <ul>
+    <li><strong>Tables:</strong> decisions, tasks, timeline_events, knowledge_nodes, knowledge_edges, sessions, snapshots, scan_history, schema_meta.</li>
+    <li><strong>Full-text search:</strong> an FTS5 virtual table (<code>memory_fts</code>) with the porter tokenizer powers <code>nexus ask</code> and the <code>--task</code> ranking.</li>
+    <li><strong>Durability:</strong> WAL journal mode, <code>synchronous=NORMAL</code>, a 5-second busy timeout, and enforced foreign keys.</li>
+  </ul>
+  <h3>JSON stores</h3>
+  <ul>
+    <li>memory.json, architecture.json, timeline.json, decisions.json, tasks.json plus per-file session records.</li>
+    <li><strong>Atomic writes:</strong> every JSON write goes to a temp file, is flushed and fsynced, then atomically renamed over the target — a crash mid-write cannot corrupt memory.</li>
+  </ul>
+</div>
+
+<!-- ============ 7 ============ -->
+<div class="section">
+  <h2><span class="num">7</span>NXP — Nexus Protocol</h2>
+  <p>
+    The <strong>Nexus Protocol (NXP)</strong> is a portable, self-describing document that
+    captures the full state of a project's memory — identity, architecture, decisions,
+    tasks, timeline, knowledge graph, recent AI sessions, and a git summary — for transfer
+    between machines, teammates, or tools.
+  </p>
+  <ul>
+    <li><code>nexus export</code> writes <code>.nexus/project.nxp</code>.</li>
+    <li><code>nexus import [--file &lt;path&gt;]</code> ingests an NXP document.</li>
+    <li>Current protocol version: <strong>1.0.0</strong>. The handoff envelope is versioned and XML-escaped for safe embedding in any AI client.</li>
+  </ul>
+</div>
+
+<!-- ============ 8 ============ -->
+<div class="section">
+  <h2><span class="num">8</span>Reliability &amp; Recent Enhancements</h2>
+  <p class="lead">Hardening and intelligence improvements delivered in the latest pass.</p>
+  <table>
+    <tr><th style="width:32%">Area</th><th>Improvement</th><th style="width:14%">Status</th></tr>
+    <tr><td>Crash safety</td><td>Atomic JSON writes (temp &rarr; fsync &rarr; rename)</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Concurrency</td><td>SQLite WAL, busy-timeout, foreign keys</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Correctness</td><td>UTF-8-safe text truncation (was a panic on multibyte text)</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Correctness</td><td>Complete XML escaping in the handoff envelope</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Robustness</td><td>No panic when the working directory is unavailable</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Intelligence</td><td><code>decide --supersedes</code> — decision lifecycle</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Intelligence</td><td><code>nexus impact &lt;file&gt;</code> — knowledge-graph traversal</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Intelligence</td><td>Graph centrality ranking of important files in <code>continue</code></td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Intelligence</td><td><code>continue --task</code> — FTS5 relevance-ranked context</td><td><span class="badge green">Done</span></td></tr>
+    <tr><td>Quality gate</td><td>Workspace builds clean; tests pass; clippy <code>-D warnings</code> clean</td><td><span class="badge green">Done</span></td></tr>
+  </table>
+  <h3>Planned next</h3>
+  <p>
+    <span class="badge amber">Next</span> MCP server mode (live agent queries) &nbsp;
+    <span class="badge amber">Next</span> <code>nexus sync</code> from git commits &nbsp;
+    <span class="badge amber">Next</span> NXP v2 with checksums &nbsp;
+    <span class="badge amber">Next</span> Optional local embeddings &amp; vector search
+  </p>
+</div>
+
+<!-- ============ 9 ============ -->
+<div class="section">
+  <h2><span class="num">9</span>Build, Test &amp; Install</h2>
+  <h3>Build</h3>
+<pre><code># Debug build
+cargo build --workspace
+
+# Optimized release binary (~10 MB, LTO + stripped)
+cargo build --release --workspace</code></pre>
+  <h3>Test &amp; lint</h3>
+<pre><code>cargo test  --workspace
+cargo clippy --workspace -- -D warnings
+cargo fmt --all -- --check</code></pre>
+  <h3>Install</h3>
+<pre><code># Put the `nexus` binary on your PATH
+cargo install --path crates/nexus-cli
+
+# Verify
+nexus --version
+nexus --help</code></pre>
+</div>
+
+<!-- ============ 10 ============ -->
+<div class="section">
+  <h2><span class="num">10</span>Roadmap</h2>
+  <table>
+    <tr><th style="width:18%">Phase</th><th style="width:22%">Theme</th><th>Highlights</th></tr>
+    <tr><td><strong>v0.1</strong> (current)</td><td>MVP</td><td>init &rarr; scan &rarr; decide &rarr; continue loop; FTS5 search; snapshots; health; NXP 1.0</td></tr>
+    <tr><td><strong>v0.2</strong></td><td>Intelligence</td><td>Session importers; symbol-level graph; auto-tasks from commits; <code>nexus watch</code>; decision supersession ✓; shell completions</td></tr>
+    <tr><td><strong>v0.3</strong></td><td>Ecosystem</td><td>Plugin API; VS Code / Cursor extension; optional embeddings; vector search; memory diff; CI integration</td></tr>
+    <tr><td><strong>v1.0</strong></td><td>Distribution</td><td>Signed binaries; Homebrew / winget / scoop; crates.io; NXP v2 with checksums; migration tooling</td></tr>
+    <tr><td><strong>v2.0</strong></td><td>Platform</td><td>Optional self-hosted sync; cross-project linking; org decision registry; agent SDK; NXP conformance suite</td></tr>
+  </table>
+  <h3>Success metrics</h3>
+  <table>
+    <tr><th>Metric</th><th>Target</th></tr>
+    <tr><td><code>nexus continue</code> latency</td><td>&lt; 2s for a 10k-file project</td></tr>
+    <tr><td>Context token efficiency</td><td>~70% reduction with <code>--compress</code></td></tr>
+    <tr><td>NXP round-trip fidelity</td><td>100% field preservation</td></tr>
+    <tr><td>Offline operation</td><td>Zero network calls</td></tr>
+    <tr><td>Cross-platform</td><td>Windows, macOS, Linux</td></tr>
+  </table>
+
+  <div class="footnote">
+    Athreix Nexus &mdash; Technical Report v0.1.0 &middot; &copy; 2026 Athreix &middot; MIT License &middot;
+    &ldquo;Git for AI Context.&rdquo;
+  </div>
+</div>
+
+</body>
+</html>

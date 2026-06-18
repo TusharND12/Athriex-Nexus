@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use chrono::Utc;
 use nexus_core::{
@@ -255,7 +255,7 @@ fn is_documentation_file(rel: &str) -> bool {
             || lower.ends_with("_report.md"))
 }
 
-fn documentation_relevance(path: &PathBuf) -> f32 {
+fn documentation_relevance(path: &Path) -> f32 {
     let name = path
         .file_name()
         .and_then(|n| n.to_str())
@@ -270,7 +270,7 @@ fn documentation_relevance(path: &PathBuf) -> f32 {
     }
 }
 
-fn count_symbols(path: &PathBuf, lang: &str) -> NexusResult<usize> {
+fn count_symbols(path: &Path, lang: &str) -> NexusResult<usize> {
     let Some((ts_lang, query_src)) = language_query(lang) else {
         return Ok(0);
     };

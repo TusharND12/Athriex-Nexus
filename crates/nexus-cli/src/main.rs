@@ -41,6 +41,9 @@ enum Commands {
         /// Write output to file
         #[arg(short, long)]
         output: Option<std::path::PathBuf>,
+        /// Focus context on a specific task (ranks memory by relevance to it)
+        #[arg(short, long)]
+        task: Option<String>,
     },
     /// Generate universal AI continuation handoff prompt
     Handoff {
@@ -76,6 +79,9 @@ enum Commands {
         rationale: Option<String>,
         #[arg(short, long)]
         tag: Vec<String>,
+        /// Mark a prior decision (by id prefix) as superseded by this one
+        #[arg(short, long)]
+        supersedes: Option<String>,
     },
     /// Display all stored decisions
     Decisions,
@@ -90,6 +96,11 @@ enum Commands {
     Health,
     /// Generate architecture map
     Map,
+    /// Trace what a file connects to in the knowledge graph
+    Impact {
+        /// File path or fragment to analyze
+        file: String,
+    },
     /// Export project.nxp (Nexus Protocol)
     Export,
     /// Import project.nxp
@@ -114,9 +125,11 @@ enum Commands {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let cwd = cli
-        .path
-        .unwrap_or_else(|| std::env::current_dir().expect("cwd"));
+    let cwd = match cli.path {
+        Some(p) => p,
+        None => std::env::current_dir()
+            .map_err(|e| anyhow::anyhow!("cannot determine current directory: {e}"))?,
+    };
     let paths = NexusPaths::from_project_root(&cwd);
 
     match cli.command {
@@ -126,7 +139,8 @@ fn main() -> Result<()> {
             compress,
             max_tokens,
             output,
-        } => commands::r#continue(&paths, compress, max_tokens, output),
+            task,
+        } => commands::r#continue(&paths, compress, max_tokens, output, task),
         Commands::Handoff {
             compress,
             max_tokens,
@@ -139,11 +153,13 @@ fn main() -> Result<()> {
             content,
             rationale,
             tag,
-        } => commands::decide(&paths, content, rationale, tag),
+            supersedes,
+        } => commands::decide(&paths, content, rationale, tag, supersedes),
         Commands::Decisions => commands::decisions(&paths),
         Commands::Ask { query, limit } => commands::ask(&paths, query, limit),
         Commands::Health => commands::health(&paths),
         Commands::Map => commands::map(&paths),
+        Commands::Impact { file } => commands::impact(&paths, file),
         Commands::Export => commands::export_nxp(&paths),
         Commands::Import { file } => commands::import_nxp(&paths, file),
         Commands::Session {

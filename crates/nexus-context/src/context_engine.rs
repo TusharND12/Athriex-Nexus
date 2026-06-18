@@ -1,11 +1,14 @@
+use std::collections::{HashMap, HashSet};
+
 use chrono::Utc;
 use nexus_compression::{estimate_tokens, CompressionEngine};
-use nexus_core::{ContinuationContext, NexusResult, TaskStatus};
+use nexus_core::{ContinuationContext, KnowledgeNode, NexusResult, NodeKind, TaskStatus};
 use nexus_decision::DecisionEngine;
 use nexus_git::GitEngine;
 use nexus_knowledge::KnowledgeEngine;
 use nexus_memory::MemoryEngine;
 use nexus_scanner::structure::format_architecture_tree;
+use nexus_search::SearchEngine;
 
 pub struct ContextEngine<'a> {
     memory: &'a MemoryEngine,
@@ -21,21 +24,71 @@ impl<'a> ContextEngine<'a> {
         compress: bool,
         max_tokens: usize,
     ) -> NexusResult<ContinuationContext> {
+        self.continue_context_for(compress, max_tokens, None)
+    }
+
+    /// Build continuation context, optionally focused on a specific task.
+    ///
+    /// When `focus_task` is set, it becomes the current task and the project's
+    /// memory (decisions + important files) is re-ranked by relevance to that
+    /// task via the FTS5 search index — turning `continue` from a full dump into
+    /// a targeted query.
+    pub fn continue_context_for(
+        &self,
+        compress: bool,
+        max_tokens: usize,
+        focus_task: Option<String>,
+    ) -> NexusResult<ContinuationContext> {
         let memory = self.memory.load_memory()?;
         let architecture = self.memory.load_architecture()?;
-        let decisions = DecisionEngine::new(self.memory).list_active()?;
+        let mut decisions = DecisionEngine::new(self.memory).list_active()?;
         let tasks = self.memory.load_tasks()?;
         let git = GitEngine::open(&self.memory.paths.project_root)?;
         let git_summary = git.summarize(10)?;
-        let _graph = KnowledgeEngine::new(self.memory).rebuild()?;
+        let graph = KnowledgeEngine::new(self.memory).rebuild()?;
+        let centrality = file_centrality(&graph);
 
-        let current_task = tasks
-            .tasks
-            .iter()
-            .find(|t| t.status == TaskStatus::InProgress)
-            .or_else(|| tasks.tasks.iter().find(|t| t.status == TaskStatus::Pending))
-            .map(|t| t.title.clone())
-            .unwrap_or_else(|| memory.current_focus.clone());
+        let focus = focus_task
+            .as_deref()
+            .map(str::trim)
+            .filter(|t| !t.is_empty())
+            .map(|t| t.to_string());
+
+        // Pull task-relevant decisions/files out of the search index.
+        let (relevant_decisions, relevant_files) = match &focus {
+            Some(task) => {
+                let mut dec = HashSet::new();
+                let mut files = HashSet::new();
+                for hit in SearchEngine::new(self.memory).ask(task, 30).unwrap_or_default() {
+                    match hit.source.as_str() {
+                        "decision" => {
+                            dec.insert(hit.doc_id);
+                        }
+                        "file" => {
+                            files.insert(hit.doc_id);
+                        }
+                        _ => {}
+                    }
+                }
+                (dec, files)
+            }
+            None => (HashSet::new(), HashSet::new()),
+        };
+
+        // Surface task-relevant decisions first (stable: false sorts before true).
+        if !relevant_decisions.is_empty() {
+            decisions.sort_by_key(|d| !relevant_decisions.contains(&d.id.to_string()));
+        }
+
+        let current_task = focus.clone().unwrap_or_else(|| {
+            tasks
+                .tasks
+                .iter()
+                .find(|t| t.status == TaskStatus::InProgress)
+                .or_else(|| tasks.tasks.iter().find(|t| t.status == TaskStatus::Pending))
+                .map(|t| t.title.clone())
+                .unwrap_or_else(|| memory.current_focus.clone())
+        });
 
         let important_decisions: Vec<String> = decisions
             .iter()
@@ -84,6 +137,24 @@ impl<'a> ContextEngine<'a> {
 
         let next_action = derive_next_action(&current_task, &tasks.tasks, &risks);
 
+        // Re-rank important files by scanner relevance plus knowledge-graph
+        // centrality, so files wired into many tasks/modules surface first.
+        let mut ranked_files = architecture.important_files.clone();
+        let file_score = |f: &nexus_core::ImportantFile| {
+            let centrality_boost = 0.15 * *centrality.get(&f.path).unwrap_or(&0) as f32;
+            let task_boost = if relevant_files.contains(&f.path) {
+                1.0
+            } else {
+                0.0
+            };
+            f.relevance + centrality_boost + task_boost
+        };
+        ranked_files.sort_by(|a, b| {
+            file_score(b)
+                .partial_cmp(&file_score(a))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
         let project_overview = format!(
             "Project: {}\n{}\nTechnologies: {}\nBranch: {} | Commits: {} | Last updated: {}",
             memory.project_name,
@@ -104,7 +175,7 @@ impl<'a> ContextEngine<'a> {
             completed_work: completed_work.clone(),
             current_task: current_task.clone(),
             important_decisions: important_decisions.clone(),
-            important_files: architecture.important_files.clone(),
+            important_files: ranked_files,
             architecture_summary: architecture_summary.clone(),
             risks: risks.clone(),
             next_recommended_action: next_action.clone(),
@@ -226,6 +297,26 @@ AI CONTINUATION PROMPT
             ctx.ai_continuation_prompt,
         )
     }
+}
+
+/// Degree centrality per file path: how many graph edges touch each file node.
+fn file_centrality(graph: &nexus_core::KnowledgeGraph) -> HashMap<String, usize> {
+    let node_by_id: HashMap<String, &KnowledgeNode> =
+        graph.nodes.iter().map(|n| (n.id.to_string(), n)).collect();
+
+    let mut degree: HashMap<String, usize> = HashMap::new();
+    for edge in &graph.edges {
+        for endpoint in [edge.from.to_string(), edge.to.to_string()] {
+            if let Some(node) = node_by_id.get(&endpoint) {
+                if node.kind == NodeKind::File {
+                    if let Some(path) = &node.path {
+                        *degree.entry(path.clone()).or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+    }
+    degree
 }
 
 fn derive_next_action(current_task: &str, tasks: &[nexus_core::Task], risks: &[String]) -> String {

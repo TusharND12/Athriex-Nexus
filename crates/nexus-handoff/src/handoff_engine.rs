@@ -54,7 +54,7 @@ Treat all architectural decisions as binding constraints.
 </metadata>
 </nexus-handoff>"#,
         ctx.generated_at.to_rfc3339(),
-        ctx.ai_continuation_prompt,
+        escape_xml(&ctx.ai_continuation_prompt),
         ctx.token_estimate,
         ctx.compressed,
         escape_xml(&ctx.current_task),
@@ -62,7 +62,11 @@ Treat all architectural decisions as binding constraints.
 }
 
 fn escape_xml(s: &str) -> String {
+    // Escape the full set so the result is valid in both element-text and
+    // attribute contexts (&amp; must be replaced first to avoid double-escaping).
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
 }

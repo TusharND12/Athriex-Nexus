@@ -1,9 +1,27 @@
+use std::collections::{HashMap, HashSet};
+
 use nexus_core::{
     Architecture, Decision, EdgeRelation, KnowledgeEdge, KnowledgeGraph, KnowledgeNode,
     NexusResult, NodeKind, ScanResult, Task,
 };
 use nexus_memory::{db_err, MemoryEngine};
 use uuid::Uuid;
+
+/// A connection from a queried file to another node in the knowledge graph.
+#[derive(Debug, Clone)]
+pub struct ImpactLink {
+    pub kind: String,
+    pub name: String,
+    pub relation: String,
+}
+
+/// What a file (or path fragment) is connected to in the knowledge graph.
+#[derive(Debug, Clone, Default)]
+pub struct ImpactReport {
+    pub query: String,
+    pub matched_files: Vec<String>,
+    pub links: Vec<ImpactLink>,
+}
 
 pub struct KnowledgeEngine<'a> {
     memory: &'a MemoryEngine,
@@ -141,6 +159,64 @@ impl<'a> KnowledgeEngine<'a> {
         Ok(())
     }
 
+    /// Trace what a file connects to: walk every edge touching a matching file
+    /// node and report the neighbouring decisions, tasks, layers, and packages.
+    pub fn impact(&self, file: &str) -> NexusResult<ImpactReport> {
+        let graph = self.rebuild()?;
+        let q = file.trim().to_lowercase();
+
+        let mut matched_ids: HashSet<Uuid> = HashSet::new();
+        let mut matched_files: Vec<String> = Vec::new();
+        for node in graph.nodes.iter().filter(|n| n.kind == NodeKind::File) {
+            let path_match = node
+                .path
+                .as_ref()
+                .map(|p| p.to_lowercase().contains(&q))
+                .unwrap_or(false);
+            if path_match || node.name.to_lowercase().contains(&q) {
+                matched_ids.insert(node.id);
+                if let Some(p) = &node.path {
+                    if !matched_files.contains(p) {
+                        matched_files.push(p.clone());
+                    }
+                }
+            }
+        }
+
+        let node_by_id: HashMap<Uuid, &KnowledgeNode> =
+            graph.nodes.iter().map(|n| (n.id, n)).collect();
+
+        let mut seen: HashSet<Uuid> = HashSet::new();
+        let mut links: Vec<ImpactLink> = Vec::new();
+        for edge in &graph.edges {
+            let neighbour = if matched_ids.contains(&edge.from) {
+                Some(edge.to)
+            } else if matched_ids.contains(&edge.to) {
+                Some(edge.from)
+            } else {
+                None
+            };
+            if let Some(id) = neighbour {
+                if matched_ids.contains(&id) || !seen.insert(id) {
+                    continue;
+                }
+                if let Some(n) = node_by_id.get(&id) {
+                    links.push(ImpactLink {
+                        kind: format!("{:?}", n.kind).to_lowercase(),
+                        name: n.name.clone(),
+                        relation: format!("{:?}", edge.relation).to_lowercase(),
+                    });
+                }
+            }
+        }
+
+        Ok(ImpactReport {
+            query: file.to_string(),
+            matched_files,
+            links,
+        })
+    }
+
     pub fn find_related_files(&self, query: &str) -> NexusResult<Vec<String>> {
         let graph = self.rebuild()?;
         let q = query.to_lowercase();
@@ -202,9 +278,10 @@ fn add_task_node(graph: &mut KnowledgeGraph, t: &Task) {
 }
 
 fn truncate(s: &str, max: usize) -> String {
-    if s.len() <= max {
+    if s.chars().count() <= max {
         s.to_string()
     } else {
-        format!("{}…", &s[..max.saturating_sub(1)])
+        let kept: String = s.chars().take(max.saturating_sub(1)).collect();
+        format!("{kept}…")
     }
 }

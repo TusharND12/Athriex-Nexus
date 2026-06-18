@@ -108,6 +108,16 @@ pub fn open_and_migrate(path: &std::path::Path) -> NexusResult<Connection> {
     }
     let conn =
         Connection::open(path).map_err(|e| nexus_core::NexusError::Database(e.to_string()))?;
+    // WAL allows concurrent readers with a single writer; busy_timeout makes
+    // brief lock contention between nexus processes block-and-retry instead of
+    // failing immediately. synchronous=NORMAL is durable under WAL.
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = NORMAL;
+         PRAGMA busy_timeout = 5000;
+         PRAGMA foreign_keys = ON;",
+    )
+    .map_err(|e| nexus_core::NexusError::Database(e.to_string()))?;
     conn.execute_batch(MIGRATIONS)
         .map_err(|e| nexus_core::NexusError::Database(e.to_string()))?;
     let version: i32 = conn

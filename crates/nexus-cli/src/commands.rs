@@ -76,11 +76,12 @@ pub fn r#continue(
     compress: bool,
     max_tokens: usize,
     output: Option<std::path::PathBuf>,
+    task: Option<String>,
 ) -> Result<()> {
     let engine = open_engine(paths)?;
     let ctx_engine = ContextEngine::new(&engine);
     let ctx = ctx_engine
-        .continue_context(compress, max_tokens)
+        .continue_context_for(compress, max_tokens, task)
         .map_err(|e| anyhow::anyhow!(e))?;
     let formatted = ctx_engine.format_continue_output(&ctx);
 
@@ -171,15 +172,20 @@ pub fn decide(
     content: String,
     rationale: Option<String>,
     tags: Vec<String>,
+    supersedes: Option<String>,
 ) -> Result<()> {
     let engine = open_engine(paths)?;
+    let had_supersedes = supersedes.is_some();
     let decision = DecisionEngine::new(&engine)
-        .record(content, rationale, tags, None)
+        .record_with_supersedes(content, rationale, tags, None, supersedes)
         .map_err(|e| anyhow::anyhow!(e))?;
 
     println!("{} Decision recorded", "✓".green().bold());
     println!("  ID: {}", decision.id);
     println!("  {}", decision.content);
+    if had_supersedes {
+        println!("  {}", "(superseded prior decision)".dimmed());
+    }
     Ok(())
 }
 
@@ -223,6 +229,44 @@ pub fn health(paths: &NexusPaths) -> Result<()> {
         for rec in &report.recommendations {
             println!("  • {rec}");
         }
+    }
+    Ok(())
+}
+
+pub fn impact(paths: &NexusPaths, file: String) -> Result<()> {
+    let engine = open_engine(paths)?;
+    let report = KnowledgeEngine::new(&engine)
+        .impact(&file)
+        .map_err(|e| anyhow::anyhow!(e))?;
+
+    println!("{}", "IMPACT ANALYSIS".bold());
+    println!();
+    if report.matched_files.is_empty() {
+        println!(
+            "  No file in the knowledge graph matches {}.",
+            file.cyan()
+        );
+        println!("  Run `nexus scan` first, or check the path.");
+        return Ok(());
+    }
+
+    println!("  Matched files:");
+    for f in &report.matched_files {
+        println!("    • {f}");
+    }
+    println!();
+    if report.links.is_empty() {
+        println!("  No connected decisions, tasks, or modules recorded yet.");
+        return Ok(());
+    }
+    println!("  Connected nodes ({}):", report.links.len());
+    for link in &report.links {
+        println!(
+            "    {} {} — {}",
+            format!("[{}]", link.kind).cyan(),
+            link.name,
+            link.relation.dimmed()
+        );
     }
     Ok(())
 }
